@@ -208,7 +208,32 @@ const btn=$("#convert"), consent=$("#consent");
 let busy=false;
 function refresh(){ btn.disabled = busy || !(files.source&&files.reference&&consent.checked); }
 consent.addEventListener("change",refresh);
-function showError(m){ const e=$("#error"); e.textContent=m; e.classList.toggle("hidden",!m); }
+function showError(m,trace){
+  const e=$("#error"); e.textContent=m; e.classList.toggle("hidden",!m);
+  if(!(m&&trace&&trace.length)) return;
+  const d=document.createElement("details"); d.style.cssText="margin:12px 0 0;padding:0;background:none;border:0";
+  const sm=document.createElement("summary"); sm.textContent="Technical details"; d.appendChild(sm);
+  const txt=JSON.stringify(trace,null,1);
+  const pre=document.createElement("pre"); pre.textContent=txt;
+  pre.style.cssText="font-size:12px;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow:auto;margin:8px 0;color:#ffd9dd;user-select:text";
+  const b=document.createElement("button"); b.type="button"; b.className="btn ghost"; b.textContent="Copy details";
+  b.onclick=async()=>{ try{ await navigator.clipboard.writeText(txt); b.textContent="Copied"; }catch{ b.textContent="Press and hold the text to copy"; } };
+  d.append(pre,b); e.appendChild(d);
+}
+// Helpers: reduce Gradio messages to a short, readable trace (no audio content)
+const clip=(v,d=0)=>{ if(typeof v==="string") return v.length>160?v.slice(0,160)+"…":v;
+  if(Array.isArray(v)) return d>3?"[…]":v.map(x=>clip(x,d+1));
+  if(v&&typeof v==="object") return d>3?"{…}":Object.fromEntries(Object.entries(v).slice(0,20).map(([k,x])=>[k,clip(x,d+1)]));
+  return v; };
+const summarize=m=>({type:m.type,stage:m.stage,position:m.position,message:m.message,data:m.type==="data"?clip(m.data):undefined});
+// Turn one Gradio output value into a playable URL, or null. Accepts a FileData object (url or path), or a string.
+function toFileRef(x){
+  if(!x) return null;
+  if(typeof x==="string") return /^https?:/.test(x)?x:`${SPACE_URL}/gradio_api/file=${x}`;
+  if(typeof x==="object"){ const u=x.url||x.path; if(typeof u!=="string"||!u) return null;
+    return /^https?:/.test(u)?u:`${SPACE_URL}/gradio_api/file=${u}`; }
+  return null;
+}
 function hideResult(){ $("#result").classList.add("hidden"); const a=$("#outAudio"); if(a.src){URL.revokeObjectURL(a.src); a.removeAttribute("src");} }
 
 const svc=$("#svc"); svc.classList.remove("hidden");
@@ -217,7 +242,7 @@ const STATUS = m => { btn.innerHTML=`<span class="spin"></span> ${m}`; };
 
 btn.addEventListener("click",async()=>{
   showError(""); hideResult(); busy=true; refresh(); STATUS("Connecting to the voice model…");
-  let job=null, timedOut=false;
+  let job=null, timedOut=false; const trace=[];
   const t=setTimeout(()=>{ timedOut=true; try{ job&&job.cancel&&job.cancel(); }catch{} },10*60*1000);
   try{
     let mod;
@@ -230,19 +255,22 @@ btn.addEventListener("click",async()=>{
       target_audio_path:wrap(files.reference.file),
       ...PARAMS
     });
-    let last=null;
+    let fullAudio=null; // keeps the latest non-empty SECOND output ("Full Output Audio") seen in any message
     for await(const msg of job){
+      trace.push(summarize(msg)); if(trace.length>40) trace.shift();
       if(msg.type==="status"){
         if(msg.stage==="error") throw new Error(msg.message||"The model reported an error.");
         if(typeof msg.position==="number" && msg.position>0) STATUS(`Waiting in the queue (position ${msg.position+1})…`);
         else if(msg.stage==="pending") STATUS("Starting the model… a sleeping model can take a few minutes");
         else STATUS("Converting your voice…");
-      }else if(msg.type==="data") last=msg.data;
+      }else if(msg.type==="data" && Array.isArray(msg.data)){
+        const ref=toFileRef(msg.data[1]); // index 1 only; index 0 is stream chunks
+        if(ref) fullAudio=ref;
+      }
     }
     if(timedOut) throw new Error("The conversion took too long and was cancelled. Try shorter clips.");
-    const out=Array.isArray(last)?last[1]:null; // [0]=stream chunks, [1]=Full Output Audio
-    const remote=out&&(out.url||(out.path?`${SPACE_URL}/gradio_api/file=${out.path}`:null));
-    if(!remote) throw new Error("The model finished but returned no audio.");
+    if(!fullAudio) throw new Error("The model finished, but its second output (Full Output Audio) was empty or in a format this app doesn't recognise. Open “Technical details” below, copy them and send them so the exact format can be fixed.");
+    const remote=fullAudio;
     const audio=$("#outAudio"), dl=$("#download");
     try{
       const r=await fetch(remote); if(!r.ok) throw 0;
@@ -255,14 +283,4 @@ btn.addEventListener("click",async()=>{
       audio.src=remote; dl.href=remote; dl.target="_blank"; dl.rel="noopener"; dl.removeAttribute("download");
     }
     $("#result").classList.remove("hidden");
-    $("#result").scrollIntoView({behavior:"smooth",block:"center"});
-  }catch(e){
-    const m=(e&&e.message)||(typeof e==="string"?e:"");
-    showError(m||"The voice model is unavailable or the conversion failed. Please try again in a minute, or use shorter clips.");
-  }finally{
-    clearTimeout(t); busy=false; btn.textContent="Convert Voice"; refresh();
-  }
-});
-</script>
-</body>
-</html>
+    $("#result").scrollIntoView({behavior:"smooth",block:"ce
