@@ -36,6 +36,53 @@ h2{font-size:clamp(26px,4vw,36px);margin:0 0 8px;letter-spacing:-.5px}
 .grid{display:grid;gap:18px}
 .steps{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.step b{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;background:rgba(71,139,255,.18);color:var(--blue);margin-bottom:10px}
+.step h3,.card h3{margin:0 0 6px;font-size:18px}.step p{margin:0;color:var(--muted);font-size:15px}
+.uploads{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;min-height:200px;border:2px dashed #3a5188;border-radius:14px;padding:24px;cursor:pointer;transition:.15s;color:var(--muted)}
+.drop:hover,.drop.over,.drop:focus-visible{border-color:var(--blue);background:rgba(71,139,255,.08);color:#fff}
+.drop svg{width:34px;height:34px;color:var(--blue)}
+.drop strong{color:#fff}
+.err-inline{color:var(--err);font-size:14px;margin:10px 0 0;min-height:1px}
+.file{background:var(--card2);border-radius:14px;padding:16px}
+.fname{font-weight:600;word-break:break-all}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:13px;margin:4px 0 12px}
+audio{width:100%;height:44px;margin-bottom:12px;color-scheme:dark}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.hidden{display:none!important}
+.consent{display:flex;gap:12px;align-items:flex-start;margin:26px 0 18px;padding:16px;border-radius:14px;background:rgba(71,139,255,.08);border:1px solid #2f4a82;font-size:15px}
+.consent input{width:22px;height:22px;margin-top:2px;accent-color:var(--blue);flex:none}
+.actions{text-align:center}
+.spin{width:18px;height:18px;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:s .8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.alert{border-radius:14px;padding:14px 16px;margin-top:18px;font-size:15px;text-align:left}
+.alert.err{background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.5);color:#ffc3ca}
+.alert.warn{background:rgba(255,196,87,.08);border:1px solid rgba(255,196,87,.4);color:#ffe2a8}
+.result{border-color:#3b66b8;box-shadow:0 0 0 1px rgba(71,139,255,.25),0 20px 60px rgba(71,139,255,.12)}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+summary{cursor:pointer;font-weight:600}details p{color:var(--muted);margin:10px 0 0}
+.notice{background:linear-gradient(135deg,#1b2d52,#192640);border:1px solid #2f4a82;border-radius:18px;padding:24px;display:flex;gap:16px}
+.notice svg{width:28px;height:28px;flex:none;color:var(--blue)}
+.notice p{margin:4px 0 0;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:14px;text-align:center}
+@media(max-width:520px){.btn.big{width:100%}.hero{padding-top:34px}}
+</style>
+</head>
+<body>
+<noscript><p style="margin:16px;padding:14px;border:1px solid #ff6b7a;border-radius:12px;color:#ffc3ca">Gifted Voice Studio needs JavaScript. Please enable it in your browser settings.</p></noscript>
+<script>
+/* Safety net: if anything fails, show a message instead of a silent blank page */
+function showFatal(m){var d=document.getElementById("fatal");if(!d){d=document.createElement("div");d.id="fatal";d.setAttribute("role","alert");
+d.style.cssText="margin:12px;padding:14px 16px;border-radius:14px;background:#3a1620;border:1px solid #ff6b7a;color:#ffc3ca;font:15px system-ui,sans-serif";
+document.body.insertBefore(d,document.body.firstChild);}d.textContent="Part of the page failed to load ("+m+"). Reload the page. If it keeps happening, tell the site owner.";}
+addEventListener("error",function(e){if(e&&e.message)showFatal(e.message);});
+</script>
+<div class="wrap">
+<header>
+  <div class="logo"><i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/></svg></i>Gifted Voice Studio</div>
+  <a class="btn ghost" href="#studio">Open studio</a>
+</header>
+
 <div class="hero">
   <span class="pill">Voice conversion for filmmakers &amp; creators</span>
   <h1>Transform the Voice.<br><span>Preserve the Story.</span></h1>
@@ -99,7 +146,7 @@ h2{font-size:clamp(26px,4vw,36px);margin:0 0 8px;letter-spacing:-.5px}
 // Real voice conversion via a Seed-VC Gradio Space (official Gradio JS client, no secret keys in the browser).
 // To use your own copy of the Space, change SPACE_URL. Pin the client version once tested (see README).
 const SPACE_URL = "https://mtnproductions-seed-vc.hf.space";
-const BUILD = "v4-seedvc-html"; // shown in the footer so you can confirm which version is live
+const BUILD = "v5-seedvc-safe"; // shown in the footer so you can confirm which version is live
 const ENDPOINT = "/predict_1"; // Seed-VC V1: changes the voice only; keeps words, timing and delivery
 const GRADIO_CLIENT_URL = "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
 const PARAMS = {diffusion_steps:25, length_adjust:1.0, inference_cfg_rate:0.7, f0_condition:false, auto_f0_adjust:true, pitch_shift:0};
@@ -223,51 +270,4 @@ btn.addEventListener("click",async()=>{
     step="running conversion ("+ENDPOINT+")";
     const wrap=f=>typeof handle_file==="function"?handle_file(f):f;
     job=client.submit(ENDPOINT,{
-      source_audio_path:wrap(files.source.file),
-      target_audio_path:wrap(files.reference.file),
-      ...PARAMS
-    });
-    let fullAudio=null; // keeps the latest non-empty SECOND output ("Full Output Audio") seen in any message
-    for await(const msg of job){
-      trace.push(summarize(msg)); if(trace.length>40) trace.shift();
-      if(msg.type==="status"){
-        if(msg.stage==="error") throw new Error(msg.message||"The model reported an error.");
-        if(typeof msg.position==="number" && msg.position>0) STATUS(`Waiting in the queue (position ${msg.position+1})…`);
-        else if(msg.stage==="pending") STATUS("Starting the model… a sleeping model can take a few minutes");
-        else STATUS("Converting your voice…");
-      }else if(msg.type==="data" && Array.isArray(msg.data)){
-        const ref=toFileRef(msg.data[1]); // index 1 only; index 0 is stream chunks
-        if(ref) fullAudio=ref;
-      }
-    }
-    if(timedOut) throw new Error("The conversion took too long and was cancelled. Try shorter clips.");
-    if(!fullAudio) throw new Error("The model finished, but its second output (Full Output Audio) was empty or in a format this app doesn't recognise. Open “Technical details” below, copy them and send them so the exact format can be fixed.");
-    const remote=fullAudio;
-    const audio=$("#outAudio"), dl=$("#download");
-    step="fetching converted audio";
-    let r=null; try{ r=await fetch(remote); }catch{ r=null; } // null = network/CORS block, not an HTTP error
-    trace.push({step:"fetch audio",host:new URL(remote).host,path:new URL(remote).pathname.replace(/[^/]*$/,"…"),status:r?r.status:"blocked/no response"});
-    if(r&&!r.ok) throw new Error(`The converted audio could not be retrieved from the model server (HTTP ${r.status}).`);
-    let blob=null; if(r){ try{ blob=await r.blob(); }catch{} }
-    if(blob&&blob.size){
-      const url=URL.createObjectURL(blob);
-      audio.src=url; dl.href=url; dl.removeAttribute("target");
-      const ty=blob.type||"";
-      dl.download="converted-voice."+(ty.includes("mpeg")?"mp3":ty.includes("ogg")?"ogg":"wav");
-    }else{ // browser blocked reading the file: still play and link the real file
-      audio.src=remote; dl.href=remote; dl.target="_blank"; dl.rel="noopener"; dl.removeAttribute("download");
-    }
-    $("#result").classList.remove("hidden");
-    $("#result").scrollIntoView({behavior:"smooth",block:"center"});
-  }catch(e){
-    const m=(e&&e.message)||(typeof e==="string"?e:"");
-    trace.push({step:"failed at",value:step,error:m}); console.warn("Gifted Voice Studio",BUILD,"failed at:",step,m);
-    showError((m||"The voice model is unavailable or the conversion failed. Please try again in a minute, or use shorter clips.")+` (step: ${step})`,trace);
-  }finally{
-    clearTimeout(t); clearInterval(tick); busy=false; btn.textContent="Convert Voice"; refresh();
-  }
-});
-</script>
-</body>
-        </html>
-  
+      source_au
